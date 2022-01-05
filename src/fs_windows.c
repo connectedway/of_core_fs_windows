@@ -99,7 +99,6 @@ static OFC_HANDLE OfcFSWin32CreateFile (OFC_LPCTSTR lpFileName,
   if (context->fileHandle == NULL || 
       context->fileHandle == INVALID_HANDLE_VALUE)
     {
-      ofc_thread_set_variable
       ofc_thread_set_variable (OfcLastError, (OFC_DWORD_PTR) GetLastError()) ;
       ofc_free (context) ;
       ret = OFC_INVALID_HANDLE_VALUE ;
@@ -424,7 +423,7 @@ static OFC_HANDLE OfcFSWin32CreateOverlapped (OFC_VOID)
   Overlapped = ofc_malloc (sizeof (OVERLAPPED)) ;
   if (Overlapped != OFC_NULL)
     {
-      BlueCmemset (Overlapped, '\0', sizeof (OVERLAPPED)) ;
+      ofc_memset (Overlapped, '\0', sizeof (OVERLAPPED)) ;
       Overlapped->hEvent = CreateEvent (NULL, TRUE, FALSE, NULL) ;
       hRet = ofc_handle_create (OFC_HANDLE_FSWIN32_OVERLAPPED, Overlapped) ;
     }
@@ -834,7 +833,7 @@ static OFC_FILE_FSINFO OfcFSWin32Info =
 
 OFC_VOID OfcFSWin32Startup (OFC_VOID)
 {
-  BlueFSRegister (OFC_FST_WIN32, &OfcFSWin32Info) ;
+  ofc_fs_register(OFC_FST_WIN32, &OfcFSWin32Info) ;
 }
 
 HANDLE OfcFSWin32GetOverlappedEvent (OFC_HANDLE hOverlapped)
