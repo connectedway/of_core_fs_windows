@@ -3,6 +3,7 @@
  * Attribution-NoDerivatives 4.0 International license that can be
  * found in the LICENSE file.
  */
+#define UNICODE
 #include <windows.h>
 
 #include "ofc/types.h"
@@ -63,6 +64,7 @@ static OFC_HANDLE OfcFSWin32CreateFile (OFC_LPCTSTR lpFileName,
   OFC_INT i ;
 
   templateHandle = NULL ;
+  template = OFC_NULL;
 
   if (hTemplateFile != OFC_HANDLE_NULL)
     {
@@ -70,7 +72,6 @@ static OFC_HANDLE OfcFSWin32CreateFile (OFC_LPCTSTR lpFileName,
       if (template != OFC_NULL)
 	{
 	  templateHandle = template->fileHandle ;
-	  ofc_handle_unlock (hTemplateFile) ;
 	}
     }
 
@@ -96,6 +97,11 @@ static OFC_HANDLE OfcFSWin32CreateFile (OFC_LPCTSTR lpFileName,
 	retry = OFC_FALSE ;
     }
 
+  if (template != OFC_NULL)
+    {
+      ofc_handle_unlock(hTemplateFile);
+    }
+      
   if (context->fileHandle == NULL || 
       context->fileHandle == INVALID_HANDLE_VALUE)
     {
@@ -144,14 +150,16 @@ static OFC_BOOL OfcFSWin32WriteFile (OFC_HANDLE hFile,
       if (hOverlapped != OFC_HANDLE_NULL)
 	{
 	  Overlapped = ofc_handle_lock (hOverlapped) ;
-	  if (Overlapped != OFC_NULL)
-	    ofc_handle_unlock (hOverlapped) ;
         }
       ret = WriteFile (context->fileHandle,
 		       lpBuffer,
 		       nNumberOfBytesToWrite,
 		       lpNumberOfBytesWritten,
 		       Overlapped) ;
+
+      if (Overlapped != OFC_NULL)
+	ofc_handle_unlock (hOverlapped) ;
+
       if (ret == OFC_FALSE)
 	ofc_thread_set_variable (OfcLastError, (OFC_DWORD_PTR) GetLastError()) ;
       ofc_handle_unlock (hFile) ;
@@ -180,8 +188,6 @@ static OFC_BOOL OfcFSWin32ReadFile (OFC_HANDLE hFile,
       if (hOverlapped != OFC_HANDLE_NULL)
 	{
 	  Overlapped = ofc_handle_lock (hOverlapped) ;
-	  if (Overlapped != OFC_NULL)
-	    ofc_handle_unlock (hOverlapped) ;
         }
 
       ret = ReadFile (context->fileHandle,
@@ -189,6 +195,10 @@ static OFC_BOOL OfcFSWin32ReadFile (OFC_HANDLE hFile,
 		      nNumberOfBytesToRead,
 		      lpNumberOfBytesRead,
 		      Overlapped) ;
+
+      if (Overlapped != OFC_NULL)
+	ofc_handle_unlock (hOverlapped) ;
+
       if (ret == OFC_FALSE)
 	ofc_thread_set_variable (OfcLastError, (OFC_DWORD_PTR) GetLastError()) ;
       ofc_handle_unlock (hFile) ;
@@ -454,6 +464,7 @@ static OFC_VOID OfcFSWin32SetOverlappedOffset (OFC_HANDLE hOverlapped,
     {
       Overlapped->Offset = OFC_LARGE_INTEGER_LOW(offset) ;
       Overlapped->OffsetHigh = OFC_LARGE_INTEGER_HIGH(offset) ;
+      ofc_handle_unlock(hOverlapped);
     }
 }
   
@@ -473,13 +484,13 @@ static OFC_BOOL OfcFSWin32GetOverlappedResult (OFC_HANDLE hFile,
   if (context != OFC_NULL)
     {
       Overlapped = ofc_handle_lock (hOverlapped) ;
-      if (Overlapped != OFC_NULL)
-	ofc_handle_unlock (hOverlapped) ;
-
       ret = GetOverlappedResult (context->fileHandle,
                                  Overlapped,
                                  lpNumberOfBytesTransferred,
                                  bWait) ;
+      if (Overlapped != OFC_NULL)
+	ofc_handle_unlock (hOverlapped) ;
+
       if (ret == OFC_FALSE)
 	ofc_thread_set_variable (OfcLastError, (OFC_DWORD_PTR) GetLastError()) ;
       ofc_handle_unlock (hFile) ;
@@ -720,12 +731,13 @@ static OFC_BOOL OfcFSWin32UnlockFileEx (OFC_HANDLE hFile,
       if (hOverlapped != OFC_HANDLE_NULL)
 	{
 	  Overlapped = ofc_handle_lock (hOverlapped) ;
-	  if (Overlapped != OFC_NULL)
-	    ofc_handle_unlock (hOverlapped) ;
         }
 
       ret = UnlockFileEx (context->fileHandle, 0,
 			  length_low, length_high, Overlapped) ;
+
+      if (Overlapped != OFC_NULL)
+	ofc_handle_unlock (hOverlapped) ;
 
       if (ret == OFC_FALSE)
 	ofc_thread_set_variable (OfcLastError, (OFC_DWORD_PTR) GetLastError()) ;
@@ -775,12 +787,13 @@ static OFC_BOOL OfcFSWin32LockFileEx (OFC_HANDLE hFile, OFC_DWORD flags,
       if (hOverlapped != OFC_HANDLE_NULL)
 	{
 	  Overlapped = ofc_handle_lock (hOverlapped) ;
-	  if (Overlapped != OFC_NULL)
-	    ofc_handle_unlock (hOverlapped) ;
         }
 
       ret = LockFileEx (context->fileHandle, flags, 0,
 			length_low, length_high, Overlapped) ;
+
+      if (Overlapped != OFC_NULL)
+	ofc_handle_unlock (hOverlapped) ;
 
       if (ret == OFC_FALSE)
 	ofc_thread_set_variable (OfcLastError, (OFC_DWORD_PTR) GetLastError()) ;
@@ -848,6 +861,7 @@ HANDLE OfcFSWin32GetOverlappedEvent (OFC_HANDLE hOverlapped)
       Overlapped = ofc_handle_lock (hOverlapped) ;
       if (Overlapped != OFC_NULL)
 	handle = Overlapped->hEvent ;
+      ofc_handle_unlock(hOverlapped);
     }
   return (handle) ;
 }
