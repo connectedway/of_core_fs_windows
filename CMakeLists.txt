@@ -11,8 +11,6 @@ set(SRCS
         src/fs_windows.c
         )
 
-add_library(of_core_fs_windows STATIC ${SRCS})
-
-set_target_properties(of_core_fs_windows PROPERTIES VERSION ${PROJECT_VERSION})
-set_target_properties(of_core_fs_windows PROPERTIES SOVERSION 1)
+add_library(of_core_fs_windows OBJECT ${SRCS})
+set_property(TARGET of_core_fs_windows PROPERTY POSITION_INDEPENDENT_CODE ON)
 
